@@ -14,6 +14,10 @@ customStyle = 1
 css = nil
 csstext = nil
 
+# Create a cachebuster
+r = Random.new
+r.rand(100000)
+
 # set our current directory to the doc's directory
 if (ENV['MARKED_ORIGIN'])
 	Dir.chdir(ENV['MARKED_ORIGIN'])
@@ -79,7 +83,7 @@ allDots.each do |dot|
 	output = Open3.capture2(runstring, :stdin_data=>dotString)
 
 	# Add a new entry in markdown to reference the file we just created
-	dot.add_next_sibling("![#{caption}](#{name})")
+	dot.add_next_sibling("![#{caption}](#{name}?#{r})")
 
 	# remove the <dot> entry from the html
 	dot.remove
@@ -112,7 +116,7 @@ allNeats.each do |neat|
 	output = Open3.capture2(runstring, :stdin_data=>neatString)
 
 	# Add a new entry in markdown to reference the file we just created
-	neat.add_next_sibling("![#{caption}](#{name})")
+	neat.add_next_sibling("![#{caption}](#{name}?#{r})")
 
 	# remove the <neato> entry from the html
 	neat.remove
