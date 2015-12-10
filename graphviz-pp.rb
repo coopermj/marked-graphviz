@@ -3,6 +3,7 @@
 # Takes markdown and spits out any graphviz diagrams into
 # tagged files and rewrites markdown to reference those files
 # Created by Micah Cooper based on the work of Brett Terpstra
+# Version 1.2
 
 require 'rubygems'
 require 'nokogiri'
@@ -10,6 +11,8 @@ require 'open3'
 include Open3
 
 customStyle = 1
+css = nil
+csstext = nil
 
 # set our current directory to the doc's directory
 if (ENV['MARKED_ORIGIN'])
@@ -17,6 +20,9 @@ if (ENV['MARKED_ORIGIN'])
 end
 
 def customStyler(name)
+	if (ENV['MARKED_CSS_PATH'])
+		css = File.open(ENV['MARKED_CSS_PATH']) { |f| Nokogiri::HTML(f) }
+
 		# Open the svg we just created
 		svg = File.open(name) { |f| Nokogiri::XML(f) }
 		# Strip out the default font-family and size
@@ -25,27 +31,20 @@ def customStyler(name)
 		svg.xpath('//@font-family').remove
 		svg.xpath('//@font-size').remove
 
-		# Get our custom css file – in the future I hope we can just bring in the current Marked css file!
-		css = File.open('yourfileherewithcompletepath') { |f| Nokogiri::HTML(f) }
-
 		# Create our defs/style structure and layer it in
 		defs_node = Nokogiri::XML::Node.new("defs", svg)
 		style_node = Nokogiri::XML::Node.new("style", svg)
 		style_node['type'] = "text/css"
 
-		cdata = "![CDATA[\n" << css.inner_text << "\n]]"
+		cdata = "![CDATA[\n" << css.inner_text << "\n]]"		
 		style_node.add_child(cdata)
-		#cdata_node = Nokogiri::XML::children.new(cdata, svg)
 
-		#style_node << cdata_node
 		defs_node << style_node
 		svg.root << defs_node  
-		#span_node = Nokogiri::XML::Node.new('span',svg)
-		#span_node['class'] = 'defs'
-		#svg.children.first.add_previous_sibling(span_node)
 
 		# Save our changes
 		File.write(name, svg.to_xml)
+	end
 end
 
 # Get content from STDIN
@@ -102,9 +101,6 @@ allNeats.each do |neat|
 	caption = neatString.match(/graph (.*)(\s*){/)[1]
 	caption = caption.rstrip
 	caption.gsub!(/_/, ' ')
-	#....need to 
-	#caption = fullcaption[1]
-
 
 	# remove all the whitespace and non-characters
 	name = basename.gsub!(/\W+/, '') << ".svg"
@@ -129,9 +125,6 @@ allNeats.each do |neat|
 end
 
 
-
-
 # return just the text (not html) to STDOUT for Marked to process
 puts html_doc.inner_text
-
 
